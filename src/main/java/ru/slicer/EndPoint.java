@@ -20,6 +20,8 @@ public class EndPoint {
     @Inject
     private RequestMapping requestMapping;
 
+    private Emitter emitter = new Emitter();
+
     @OnMessage
     public void onMessage(final String message, final Session session) {
         //В постановке не сказано, как отвечать на запрос, НЕ являющийся запросом аутентификации
@@ -45,37 +47,18 @@ public class EndPoint {
         final String sid = jsonObject.getString("sequence_id");
         final RequestHandler requestHandler = requestMapping.findHandler(requestType);
         if (requestHandler == null) {
-            sendErrorResponse(session, message, sid,
+            emitter.sendErrorResponse(session, message, sid,
                     "Unknown request type", "customer.invalidRequestType");
         } else {
             try {
-                requestHandler.processRequest(sid, jsonObject.getJsonObject("data"), session);
+                requestHandler.processRequest(sid, jsonObject.getJsonObject("data"), session, emitter);
             } catch (ExpectedException e) {
-                sendErrorResponse(session, message, sid,
+                emitter.sendErrorResponse(session, message, sid,
                         e.getDescription(), e.getErrorCode());
             } catch (Exception e) {
-                sendErrorResponse(session, message, sid,
+                emitter.sendErrorResponse(session, message, sid,
                         "Unexpected error", "customer.unexpectedError");
             }
-        }
-    }
-
-    private void sendErrorResponse(final Session session, final String message,
-                                   final String sequenceId, final String description, String errorCode) {
-        try (final JsonWriter jsonWriter = Json.createWriter(session.getBasicRemote().getSendWriter())) {
-            final JsonObject response = Json.createObjectBuilder()
-                    .add("type", "CUSTOMER_ERROR")
-                    .add("sequence_id", sequenceId)
-                    .add("data",
-                            Json.createObjectBuilder()
-                                    .add("error_description", description)
-                                    .add("error_code", errorCode)
-                                    .build())
-                    .build();
-            jsonWriter.writeObject(response);
-        } catch (IOException e) {
-            System.out.println(message);
-            e.printStackTrace();
         }
     }
 }

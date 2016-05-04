@@ -20,7 +20,6 @@ public class RequestMapping {
     }
 
     public RequestHandler findHandler(final String requestType) {
-        System.out.println(loginRequestHandler);
         return mapping.get(requestType);
     }
 }
