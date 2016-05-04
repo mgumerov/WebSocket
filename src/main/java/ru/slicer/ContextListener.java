@@ -8,7 +8,6 @@ import javax.sql.DataSource;
 
 import org.h2.tools.RunScript;
 
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -16,7 +15,10 @@ import java.sql.SQLException;
 
 @WebListener
 public class ContextListener implements ServletContextListener {
-    @Resource
+    //Конфигурировать свой датасорс нам пришлось бы в конфиге контейнера,
+    //и чтобы можно было обойтись без этого, для целей тестирования обойдемся
+    //существующим в wildfly/jboss изначально in-memory datasource.
+    @Resource(lookup = "java:jboss/datasources/ExampleDS")
     private DataSource securityDataSource;
 
     @Override

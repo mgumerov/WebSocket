@@ -15,10 +15,8 @@ import javax.websocket.server.ServerEndpoint;
 public class EndPoint {
 
     //Now here is another odd problem, endpoint instances get their dependency-injection
-    //wired, but resource-injection not wired. So we will have another middleman bean
-    //be responsible for mapping.
-    //@Resource
-    //private String requestMapping;
+    //wired, but resource-injection not wired. So we will have another middleman
+    //to hold the resource, and @inject that middleman.
     @Inject
     private RequestMapping requestMapping;
 
