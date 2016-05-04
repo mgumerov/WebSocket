@@ -22,21 +22,60 @@ public class EndPoint {
 
     @OnMessage
     public void onMessage(final String message, final Session session) {
-        final JsonObject jsonObject = Json.createReader(new StringReader(message)).readObject();
-        System.out.println(jsonObject);
+        //В постановке не сказано, как отвечать на запрос, НЕ являющийся запросом аутентификации
+        //(успешным или нет), или на неверно построенный запрос в т.ч.
+        //Будем придумывать сами...
+        final JsonObject jsonObject;
+        try {
+            jsonObject = Json.createReader(new StringReader(message)).readObject();
+        } catch (Exception e) {
+            //на такое ответ вообще слать не будем, а в лог положим текст.
+            //лучше было б положить только первые N символов, но так нагляднее:
+            System.out.println(message);
+            e.printStackTrace();
+            return;
+        }
 
-        final RequestHandler requestHandler = requestMapping.findHandler(jsonObject.getString("type"));
+        final String requestType = jsonObject.getString("type");
+        if (requestType == null) { //считаем частным случаем неверного формата
+            System.out.println(message);
+            return;
+        }
+
+        final String sid = jsonObject.getString("sequence_id");
+        final RequestHandler requestHandler = requestMapping.findHandler(requestType);
         if (requestHandler == null) {
-            //TODO return ERROR
-            try (final JsonWriter jsonWriter = Json.createWriter(session.getBasicRemote().getSendWriter())) {
-                jsonWriter.writeObject(jsonObject);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            sendErrorResponse(session, message, sid,
+                    "Unknown request type", "customer.invalidRequestType");
         } else {
-            System.out.println(requestHandler);
-            requestHandler.processRequest(jsonObject.getString("sequence_id"),
-                    jsonObject.getJsonObject("data"), session);
+            try {
+                requestHandler.processRequest(sid, jsonObject.getJsonObject("data"), session);
+            } catch (ExpectedException e) {
+                sendErrorResponse(session, message, sid,
+                        e.getDescription(), e.getErrorCode());
+            } catch (Exception e) {
+                sendErrorResponse(session, message, sid,
+                        "Unexpected error", "customer.unexpectedError");
+            }
+        }
+    }
+
+    private void sendErrorResponse(final Session session, final String message,
+                                   final String sequenceId, final String description, String errorCode) {
+        try (final JsonWriter jsonWriter = Json.createWriter(session.getBasicRemote().getSendWriter())) {
+            final JsonObject response = Json.createObjectBuilder()
+                    .add("type", "CUSTOMER_ERROR")
+                    .add("sequence_id", sequenceId)
+                    .add("data",
+                            Json.createObjectBuilder()
+                                    .add("error_description", description)
+                                    .add("error_code", errorCode)
+                                    .build())
+                    .build();
+            jsonWriter.writeObject(response);
+        } catch (IOException e) {
+            System.out.println(message);
+            e.printStackTrace();
         }
     }
 }

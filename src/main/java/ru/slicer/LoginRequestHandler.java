@@ -8,11 +8,8 @@ import java.io.IOException;
 @ApplicationScoped
 public class LoginRequestHandler implements RequestHandler {
     @Override
-    public void processRequest(final String sequenceId, final JsonObject data, final Session session) {
-        try {
-            session.getBasicRemote().sendText("Authenticated");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public void processRequest(final String sequenceId, final JsonObject data, final Session session) throws ExpectedException {
+        throw new ExpectedException("Not implemented", "customer.NotImplemented");
+        //session.getBasicRemote().sendText("Authenticated");
     }
 }
