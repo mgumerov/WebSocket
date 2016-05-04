@@ -26,10 +26,10 @@ public class ContextListener implements ServletContextListener {
                     getResourceAsStream("init.sql"))) {
                 RunScript.execute(securityDataSource.getConnection(), reader);
             } catch (SQLException e) {
-                e.printStackTrace();
+                throw new RuntimeException(e);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 

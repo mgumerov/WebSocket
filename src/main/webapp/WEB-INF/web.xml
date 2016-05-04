@@ -5,4 +5,12 @@
 		  http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
            version="3.0">
 
+    <!-- Поначалу хотел по аналогии с Spring вынести маппинг "код запроса - бин обработки"
+         в XML, но, похоже, ресурс-коллекцию объявить нельзя. Придется конфигурировать в коде.
+    <env-entry>
+        <env-entry-name>ru.slicer.RequestMapping/requestMapping</env-entry-name>
+        <env-entry-type>java.lang.String</env-entry-type>
+        <env-entry-value>LOGIN_CUSTOMER</env-entry-value>
+    </env-entry-->
+
 </web-app>
