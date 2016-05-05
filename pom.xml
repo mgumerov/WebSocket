@@ -24,7 +24,6 @@
                 <artifactId>maven-war-plugin</artifactId>
                 <version>2.6</version>
             </plugin>
-            <!-- Ради spring -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -53,12 +52,6 @@
             <artifactId>jboss-servlet-api_3.1_spec</artifactId>
             <version>1.0.0.Final</version>
         </dependency>
-        <!--dependency>
-            <groupId>javax</groupId>
-            <artifactId>javaee-web-api</artifactId>
-            <version>7.0</version>
-            <scope>provided</scope>
-        </dependency-->
 
         <dependency>
             <groupId>com.h2database</groupId>
@@ -75,6 +68,18 @@
             <groupId>javax.enterprise</groupId>
             <artifactId>cdi-api</artifactId>
             <version>1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>javax</groupId>
+            <artifactId>javaee-api</artifactId>
+            <version>7.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>5.0.7.Final</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

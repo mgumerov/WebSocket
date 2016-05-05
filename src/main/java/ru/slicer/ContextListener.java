@@ -18,7 +18,7 @@ public class ContextListener implements ServletContextListener {
     //Конфигурировать свой датасорс нам пришлось бы в конфиге контейнера,
     //и чтобы можно было обойтись без этого, для целей тестирования обойдемся
     //существующим в wildfly/jboss изначально in-memory datasource.
-    @Resource(lookup = "java:jboss/datasources/ExampleDS")
+    @Resource(lookup = Datasources.MAIN)
     private DataSource securityDataSource;
 
     @Override

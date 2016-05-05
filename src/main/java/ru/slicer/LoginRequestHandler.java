@@ -5,8 +5,13 @@ import sun.rmi.runtime.Log;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonObject;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
+import javax.persistence.PersistenceContext;
 import javax.websocket.Session;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -43,6 +48,12 @@ public class LoginRequestHandler implements RequestHandler {
         }
     }
 
+    //@PersistenceContext(unitName="my-pu")
+    //protected EntityManager entityManager;
+
+    @Inject
+    private Service service;
+
     @PostConstruct
     private void startThreads() {
         final Runnable runnable = (() -> {
@@ -51,6 +62,9 @@ public class LoginRequestHandler implements RequestHandler {
                     final LoginRequest rq = queue.take();
                     //неэффективно но я все равно собираюсь переделывать на нормальный логгер
                     System.out.println(Thread.currentThread() + ": " + rq.data);
+
+                    service.test();
+
                     rq.emitter.sendData(rq.session, rq.sequenceId, "CUSTOMER_API_TOKEN",
                             Json.createObjectBuilder()
                                     .add("api_token", "xx")
