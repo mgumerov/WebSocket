@@ -11,6 +11,7 @@ import org.h2.tools.RunScript;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.sql.Connection;
 import java.sql.SQLException;
 
 @WebListener
@@ -25,8 +26,10 @@ public class ContextListener implements ServletContextListener {
     public void contextInitialized(ServletContextEvent event) {
         try {
             try (final Reader reader = new InputStreamReader(Thread.currentThread().getContextClassLoader().
-                    getResourceAsStream("init.sql"))) {
-                RunScript.execute(securityDataSource.getConnection(), reader);
+                    getResourceAsStream("init.sql"));
+                 final Connection connection = securityDataSource.getConnection())
+            {
+                RunScript.execute(connection, reader);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
