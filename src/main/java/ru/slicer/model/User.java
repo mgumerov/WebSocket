@@ -2,8 +2,10 @@ package ru.slicer.model;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.Table;
 
-@Entity(name="USERS")
+@Entity
+@Table(name="USERS")
 public class User {
     @Id
     private long id;
