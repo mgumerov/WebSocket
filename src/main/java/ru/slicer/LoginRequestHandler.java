@@ -74,6 +74,18 @@ public class LoginRequestHandler implements RequestHandler {
                         continue;
                     }
 
+                    //for debugging; in log4j we could add condition "if isDebugEnabled"
+                    {
+                        final List<Token> dump = service.dump(rq.data.getString("email"));
+                        System.out.println(">> Tokens for this user:");
+                        for (final Token t2 : dump) {
+                            System.out.print(t2.getId());
+                            System.out.print(" till ");
+                            System.out.println(t2.getExpirationDate());
+                        }
+                        System.out.println("<<");
+                    }
+
                     rq.emitter.sendData(rq.session, rq.sequenceId, "CUSTOMER_API_TOKEN",
                             Json.createObjectBuilder()
                                     .add("api_token", token.getId())

@@ -18,6 +18,7 @@ public class Token {
     @Id
     private String id;
 
+    //С момента expires токен уже считается недействительным
     private Timestamp expires;
 
     @ManyToOne
