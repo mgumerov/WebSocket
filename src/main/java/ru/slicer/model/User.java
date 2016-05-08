@@ -7,14 +7,13 @@ import javax.persistence.Table;
 @Entity
 @Table(name="USERS")
 public class User {
-    @Id
+    @Id //TODO продекларировать автогенерацию
     private long id;
 
     private String email;
     private String password;
 
-//            ID BIGINT auto_increment,
-  //          EMAIL VARCHAR2,
-    //        PASSWORD VARCHAR2,
-
+    public String getPassword() {
+        return password;
+    }
 }

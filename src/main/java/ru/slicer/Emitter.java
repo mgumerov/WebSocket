@@ -23,7 +23,7 @@ public class Emitter {
         }
     }
 
-    public void sendErrorResponse(final Session session, final String message,
+    public void sendErrorResponse(final Session session, final String logmessage,
                                   final String sequenceId, final String description, String errorCode) {
         try (final JsonWriter jsonWriter = Json.createWriter(session.getBasicRemote().getSendWriter())) {
             final JsonObject response = Json.createObjectBuilder()
@@ -37,7 +37,7 @@ public class Emitter {
                     .build();
             jsonWriter.writeObject(response);
         } catch (IOException e) {
-            System.out.println(message);
+            System.out.println(logmessage);
             e.printStackTrace();
         }
     }

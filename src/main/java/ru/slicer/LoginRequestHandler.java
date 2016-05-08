@@ -1,5 +1,6 @@
 package ru.slicer;
 
+import ru.slicer.model.Token;
 import sun.rmi.runtime.Log;
 
 import javax.annotation.PostConstruct;
@@ -14,6 +15,8 @@ import javax.persistence.Persistence;
 import javax.persistence.PersistenceContext;
 import javax.websocket.Session;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -48,9 +51,6 @@ public class LoginRequestHandler implements RequestHandler {
         }
     }
 
-    //@PersistenceContext(unitName="my-pu")
-    //protected EntityManager entityManager;
-
     @Inject
     private Service service;
 
@@ -63,12 +63,22 @@ public class LoginRequestHandler implements RequestHandler {
                     //неэффективно но я все равно собираюсь переделывать на нормальный логгер
                     System.out.println(Thread.currentThread() + ": " + rq.data);
 
-                    service.test();
+                    final Token token;
+                    try {
+                        token = service.login(rq.data.getString("email"), rq.data.getString("password"));
+                    } catch (ExpectedException e) {
+                        rq.emitter.sendErrorResponse(rq.session, rq.data.toString() /* пока подход такой,
+                        что мы выдаем в лог в случае неуспеха отправки ответа, и выдаем исходное сообщение - ну,
+                        в данной точке совсем уж исходного нет, но есть его исходное поле data. */,
+                                rq.sequenceId, e.getDescription(), e.getErrorCode());
+                        continue;
+                    }
 
                     rq.emitter.sendData(rq.session, rq.sequenceId, "CUSTOMER_API_TOKEN",
                             Json.createObjectBuilder()
-                                    .add("api_token", "xx")
-                                    .add("api_token_expiration_date", "yy")
+                                    .add("api_token", token.getId())
+                                    .add("api_token_expiration_date",
+                                            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(token.getExpirationDate()))
                                     .build());
                 }
             } catch (InterruptedException e) {
