@@ -26,14 +26,15 @@ public class Service {
     public Token login(final String email, final String password) throws ExpectedException {
         final User user;
         try {
-            //Пока так, тупо без учета конкуренции, для проверки
-            user = (User) entityManager.createQuery("select user from User user where user.email = :email")
-                    .setParameter("email", email).getSingleResult();//и без DAO... usersDao.findUserByEmail(email)
+            user = (User) entityManager.createQuery(
+                    "select user from User user where (user.email = :email) and (user.password = :password)")
+                    .setParameter("email", email)
+                    .setParameter("password", password)
+                    .setLockMode(LockModeType.PESSIMISTIC_READ) //См. комментарий ниже
+                    .getSingleResult();
         } catch (NoResultException e) {
             throw new ExpectedException("Customer not found", "customer.notFound");
         }
-        if ((password == null && user.getPassword() != null) || !user.getPassword().equals(password))
-            throw new ExpectedException("Invalid customer password", "customer.invalidPassword");
 
         final Token token = Token.createNewFor(user);
 
@@ -68,14 +69,19 @@ public class Service {
         //реально провели сброс даты окончания в каких-то существующих записях в одной транзакции, другая в итоге не
         //сможет закоммититься, так что это не решение. В SQL решением было бы не изменять их сразу, а сделать
         //select for update, а уже потом (пока конкурентные транзакции ждут нас) сбросить все токены по юзеру,
-        //добавить новый, закоммититься. Но в чистом JPA так можно лочить - не изменяя - только ОДНУ запись!
-        //А я хочу остаться в рамках JPA.
-        //Я думаю, все равно пойду этим путем. Залочу User (да, это плохая идея в реальном приложении, менять User может
+        //добавить новый, закоммититься. ~Но в чистом JPA так можно лочить - не изменяя - только ОДНУ запись!
+        //А я хочу остаться в рамках JPA.~ Поправка: уже нашел, что это не так, но переделывать уже лень, ведь
+        //тогда надо проделать какую-то нормальную проверку того, что range lock работает как надо, защищая в том числе
+        //от phantom reads.
+        //
+        //Поэтому я вместо этого залочу User (да, это плохая идея в реальном приложении, менять User может
         //быть нужно и тем, кто реально не конкурирует с нами, но в реальном приложении я бы не поленился и завел
         //отдельную табличку именно для блокировок tokens по user, где бы выписывал user-ов, которым хоть один token
         //был назначен, и в ней бы блокировал).
-        entityManager.find(User.class, user.getId(), LockModeType.PESSIMISTIC_READ);
-        //теперь никто не мешает нам. Можем поменять нужное.
+        //Ну и я могу выставить эту блокировку сразу при выборке юзера, чтобы дважды в БД не ходить.
+        //entityManager.find(User.class, user.getId(), LockModeType.PESSIMISTIC_READ);
+
+        //Теперь никто не мешает нам, можем поменять нужное.
         entityManager.persist(token);
         entityManager
                 .createQuery("update Token token set token.expires=CURRENT_TIMESTAMP " +

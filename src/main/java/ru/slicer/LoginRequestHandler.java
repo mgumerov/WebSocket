@@ -9,13 +9,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonObject;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
-import javax.persistence.PersistenceContext;
 import javax.websocket.Session;
-import java.io.IOException;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,7 +28,6 @@ public class LoginRequestHandler implements RequestHandler {
     public void processRequest(final String sequenceId, final JsonObject data, final Session session,
                                final Emitter emitter) throws ExpectedException {
         queue.add(new LoginRequest(sequenceId, data, session, emitter));
-        //throw new ExpectedException("Not implemented", "customer.NotImplemented");
     }
 
     private static class LoginRequest {
@@ -98,6 +91,21 @@ public class LoginRequestHandler implements RequestHandler {
             }
         });
 
+        //Что касается количества потоков, хотел поднять еще один вопрос. Если система действительно высоконагруженная,
+        //то мы можем упереться в то, что последовательные запросы в БД выполняются недостаточно быстро. К примеру,
+        //недавно я проводил тестирование на HBase (конечно, тут HBase явно не к месту, но все же) и один поток мог
+        //сделать лишь 120 или около того запросов в секунду. Т.е. если нам нужно 1000 логинов в секунду обрабатывать,
+        //нужно 10 потоков отвести только под это, хотя конечно они часть времени будут простаивать в ожидании ответа
+        //по сети; а ведь приложение не только запросы логина обслуживает, а развернуть сотню потоков на одной машине
+        //это довольно жадно. То есть нужно либо масштабировать решение на две машины - очевидное решение, и хорошо,
+        //что с этим вроде проблем быть не должно, - либо еще мне пришел в голову вот какой вариант. Можно накапливать
+        //запросы на логин, и когда достигнут определенный размер блока (или прошел некий интервал времени), их
+        //обрабатывать оптом (все сразу или по несколько штук). При этом они все пойдут через один connection, в
+        //одной транзакции, и можно будет одним select вытащить user-ов сразу по нескольким запросам, и аналогично
+        //сделать insert тоже сразу по нескольким запросам (правда, надо будет следить за возможностью того, что будут
+        //запросы по одному и тому же юзеру - убедиться, что мы это обработаем корректно). Тогда если запросы приходят
+        //очень часто, это ускорит среднее время их обработки (а если редко, то замедлит, но не более чем на указанный
+        //интервал времени). Но сейчас я это реализовывать не стану.
         {
             final List<Thread> list = new ArrayList<>();
             //I believe we better have 2 of those guys, 'cause our Endpoint should be really fast, leaving
